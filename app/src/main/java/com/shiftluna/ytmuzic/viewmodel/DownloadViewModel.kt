@@ -96,8 +96,8 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
                 if (downloadedFile != null) {
                     val fileSize = "${downloadedFile.length() / (1024 * 1024)} MB"
                     
-                    // Copy to destination
-                    val destUri = downloadFolderUri.value
+                    // Copy to destination (read directly from DataStore to avoid StateFlow race)
+                    val destUri = settingsRepository.downloadFolderUri.first()
                     var finalPath = ""
                     
                     if (destUri != null) {

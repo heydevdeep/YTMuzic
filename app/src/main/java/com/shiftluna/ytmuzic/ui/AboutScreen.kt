@@ -1,5 +1,6 @@
 package com.shiftluna.ytmuzic.ui
 
+import com.shiftluna.ytmuzic.BuildConfig
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -24,12 +25,12 @@ fun AboutScreen() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "YTMuzic DL",
+            text = "YT Muzic",
             style = MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Version 1.0",
+            text = "Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
