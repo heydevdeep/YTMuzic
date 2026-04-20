@@ -73,8 +73,12 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
                 request.addOption("-o", template)
 
                 val response = YoutubeDL.getInstance().execute(request, "current_download") { progress, etaInSeconds, _ ->
-                    downloadProgress.value = progress / 100f
-                    downloadStatus.value = "Downloading... ETA: ${etaInSeconds}s"
+                    val validProgress = if (progress >= 0) progress / 100f else 0f
+                    downloadProgress.value = validProgress
+                    
+                    val progressStr = if (progress >= 0) "${progress.toInt()}%" else "Preparing..."
+                    val etaStr = if (etaInSeconds > 0) " ETA: ${etaInSeconds}s" else ""
+                    downloadStatus.value = "Downloading... $progressStr$etaStr"
                 }
 
                 downloadStatus.value = "Processing metadata..."
@@ -152,11 +156,17 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 YoutubeDL.getInstance().destroyProcessById("current_download")
-                downloadStatus.value = "Download stopped by user"
+                downloadStatus.value = "Download stopped"
                 isDownloading.value = false
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            downloadDao.deleteAllDownloads()
         }
     }
 

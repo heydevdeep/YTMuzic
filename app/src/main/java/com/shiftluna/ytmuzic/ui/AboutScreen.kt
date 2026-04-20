@@ -35,7 +35,7 @@ fun AboutScreen() {
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Developed by shiftluna",
+            text = "Developed by Shift Luna.",
             style = MaterialTheme.typography.bodyMedium
         )
     }

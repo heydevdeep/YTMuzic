@@ -32,12 +32,12 @@ fun DownloadsScreen(viewModel: DownloadViewModel) {
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Top Bar Section
+    Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        // Top Bar Section (Now a standalone Card-like container)
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(24.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -50,6 +50,7 @@ fun DownloadsScreen(viewModel: DownloadViewModel) {
                     label = { Text("YouTube URL") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
                     trailingIcon = {
                         IconButton(onClick = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -108,9 +109,7 @@ fun DownloadsScreen(viewModel: DownloadViewModel) {
 
         // List Section
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

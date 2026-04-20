@@ -72,10 +72,22 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            TextButton(onClick = { viewModel.setDownloadFolder(null) }) {
-                                Text("Reset to Default")
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                            
+                            Text("Storage", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Button(
+                                onClick = { 
+                                    viewModel.clearHistory()
+                                    showSettingsSheet = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Clear Download History")
                             }
+                            
                             Spacer(modifier = Modifier.height(32.dp))
                         }
                     }
