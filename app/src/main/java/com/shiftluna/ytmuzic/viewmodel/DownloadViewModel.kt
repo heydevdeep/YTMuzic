@@ -1,6 +1,7 @@
 package com.shiftluna.ytmuzic.viewmodel
 
 import android.app.Application
+import android.util.Log
 import android.net.Uri
 import android.os.Environment
 import androidx.documentfile.provider.DocumentFile
@@ -42,6 +43,12 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
     fun startDownload(url: String) {
         if (url.isBlank()) return
         viewModelScope.launch(Dispatchers.IO) {
+            // Guard: YoutubeDL must be initialized (fails on x86_64 emulators — ARM device required)
+            if (!com.shiftluna.ytmuzic.App.isInitialized) {
+                val reason = com.shiftluna.ytmuzic.App.initError ?: "unknown error"
+                downloadStatus.value = "Engine not ready: $reason"
+                return@launch
+            }
             isDownloading.value = true
             downloadProgress.value = 0f
             downloadStatus.value = "Starting download..."
@@ -55,26 +62,34 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
                 val template = File(cacheDir, "%(title)s.%(ext)s").absolutePath
 
                 val request = YoutubeDLRequest(url)
-                request.addOption("-f", "ba")
+                request.addOption("-f", "bestaudio/best")
                 request.addOption("-x")
                 request.addOption("--audio-format", "mp3")
                 request.addOption("--embed-metadata")
                 request.addOption("--embed-thumbnail")
                 request.addOption("--convert-thumbnails", "jpg")
                 request.addOption("--ppa", "ffmpeg: -c:v mjpeg -vf crop=ih:ih")
+                request.addOption("--extractor-args", "youtube:player-client=android_music,web_music")
                 request.addOption("-o", template)
 
-                val response = YoutubeDL.getInstance().execute(request, "ytmuzic") { progress, etaInSeconds, _ ->
+                val response = YoutubeDL.getInstance().execute(request, "current_download") { progress, etaInSeconds, _ ->
                     downloadProgress.value = progress / 100f
                     downloadStatus.value = "Downloading... ETA: ${etaInSeconds}s"
                 }
 
                 downloadStatus.value = "Processing metadata..."
+                Log.d("DownloadViewModel", "Starting getInfo for $url")
+
+                // Get real video info
+                val info = YoutubeDL.getInstance().getInfo(url)
+                val videoId = info.id ?: url.hashCode().toString()
+                val title = info.title ?: "Unknown Title"
+                Log.d("DownloadViewModel", "Got metadata: $title ($videoId)")
 
                 // Find the downloaded file in cache
+                Log.d("DownloadViewModel", "Looking for file in $cacheDir")
                 val downloadedFile = cacheDir.listFiles()?.firstOrNull { it.extension == "mp3" }
                 if (downloadedFile != null) {
-                    val title = downloadedFile.nameWithoutExtension
                     val fileSize = "${downloadedFile.length() / (1024 * 1024)} MB"
                     
                     // Copy to destination
@@ -106,20 +121,16 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
                     }
 
                     // Save to Room
-                    // Extract Video ID if possible, otherwise use url hash
-                    val videoId = response.out?.let { 
-                        // attempt to get ID if possible, for simplicity use URL hash or title
-                        url.hashCode().toString() + "_" + System.currentTimeMillis()
-                    } ?: url.hashCode().toString()
-
                     val item = DownloadItem(
                         videoId = videoId,
                         title = title,
+                        originalUrl = url,
                         filePath = finalPath,
-                        thumbnailPath = "", // Embedded thumbnail, so no separate path needed unless extracted
+                        thumbnailPath = info.thumbnail ?: "",
                         fileSize = fileSize
                     )
                     downloadDao.insertDownload(item)
+                    Log.d("DownloadViewModel", "Saved to DB: $title")
 
                     // Clean up cache
                     downloadedFile.delete()
@@ -133,6 +144,18 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
                 downloadStatus.value = "Error: ${e.message}"
             } finally {
                 isDownloading.value = false
+            }
+        }
+    }
+
+    fun stopDownload() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                YoutubeDL.getInstance().destroyProcessById("current_download")
+                downloadStatus.value = "Download stopped by user"
+                isDownloading.value = false
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

@@ -2,6 +2,7 @@ package com.shiftluna.ytmuzic.ui
 
 import android.content.ClipboardManager
 import android.content.Context
+import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -79,13 +80,22 @@ fun DownloadsScreen(viewModel: DownloadViewModel) {
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    ElevatedButton(
-                        onClick = { viewModel.startDownload(urlInput) },
-                        enabled = !isDownloading && urlInput.isNotBlank()
-                    ) {
-                        Icon(Icons.Default.Download, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Download")
+                    if (isDownloading) {
+                        Button(
+                            onClick = { viewModel.stopDownload() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Stop")
+                        }
+                    } else {
+                        ElevatedButton(
+                            onClick = { viewModel.startDownload(urlInput) },
+                            enabled = urlInput.isNotBlank()
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Download")
+                        }
                     }
                 }
                 
@@ -107,7 +117,7 @@ fun DownloadsScreen(viewModel: DownloadViewModel) {
             items(downloads, key = { it.videoId }) { item ->
                 DownloadItemCard(
                     item = item,
-                    onRedownload = { viewModel.startDownload("https://youtube.com/watch?v=${item.videoId}") }
+                    onRedownload = { viewModel.startDownload(item.originalUrl) }
                 )
             }
         }
@@ -127,23 +137,16 @@ fun DownloadItemCard(item: DownloadItem, onRedownload: () -> Unit) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Placeholder for Thumbnail since we can't easily use Coil to extract embedded MP3 art out of the box
-            // In a real app we'd build a custom fetcher or use MediaMetadataRetriever
-            Surface(
+            AsyncImage(
+                model = item.thumbnailPath,
+                contentDescription = null,
                 modifier = Modifier
                     .size(60.dp)
                     .clip(RoundedCornerShape(8.dp)),
-                color = MaterialTheme.colorScheme.secondaryContainer
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Download, // Placeholder
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxSize(),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                placeholder = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_report_image),
+                error = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_report_image)
+            )
             
             Spacer(modifier = Modifier.width(16.dp))
             

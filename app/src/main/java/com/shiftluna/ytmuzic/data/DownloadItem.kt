@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class DownloadItem(
     @PrimaryKey val videoId: String,
     val title: String,
+    val originalUrl: String,
     val filePath: String,
     val thumbnailPath: String,
     val fileSize: String,

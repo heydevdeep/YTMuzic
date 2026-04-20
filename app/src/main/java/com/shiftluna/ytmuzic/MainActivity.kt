@@ -151,6 +151,7 @@ class MainActivity : ComponentActivity() {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
             if (sharedText != null) {
                 viewModel.urlInput.value = sharedText
+                viewModel.startDownload(sharedText)
             }
         }
     }
